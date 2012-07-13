@@ -5,6 +5,31 @@ var events = require('events');
 var ESC = '\u001b';
 var CSI = ESC + '[';
 
+var LINEDRAW_UTF8 = {
+  horiz: '\u2501',
+  verti: '\u2503',
+  topleft: '\u250f',
+  topright: '\u2513',
+  bottomright: '\u251b',
+  bottomleft: '\u2517'
+};
+var LINEDRAW_VT100 = {
+  horiz: ESC + '(0\u0071' + ESC + '(B',
+  verti: ESC + '(0\u0078' + ESC + '(B',
+  topleft: ESC + '(0\u006c' + ESC + '(B',
+  topright: ESC + '(0\u006b' + ESC + '(B',
+  bottomright: ESC + '(0\u006a' + ESC + '(B',
+  bottomleft: ESC + '(0\u006d' + ESC + '(B'
+};
+var LINEDRAW_ASCII = {
+  horiz: '-',
+  verti: '|',
+  topleft: '+',
+  topright: '+',
+  bottomright: '+',
+  bottomleft: '+'
+};
+
 var parsetable = {
   'REST': [
     { c: 0x1b, acts: [ { a: 'STATE', b: 'ESCAPE' } ] },
@@ -143,6 +168,10 @@ function ANSITerm()
   self._out = process.stdout; // XXX
   self._err = process.stderr; // XXX
 
+  self.linedraw = LINEDRAW_VT100;
+  if (process.env.LANG && process.env.LANG.match(/[uU][tT][fF]-?8$/))
+    self.linedraw = LINEDRAW_UTF8;
+
   if (!self._in.isTTY || !self._out.isTTY)
     throw new Error('not a tty');
 
@@ -187,14 +216,14 @@ function ANSITerm()
   self.drawHorizontalLine = function at_drawHorizontalLine(y, xfrom, xto) {
     var s = '';
     for (var p = xfrom; p <= xto; p++)
-      s += '-';
+      s += self.linedraw.horiz;
     self.moveto(xfrom, y);
     self.write(s);
   }
   self.drawVerticalLine = function at_drawVerticalLine(x, yfrom, yto) {
     for (var p = yfrom; p <= yto; p++) {
       self.moveto(x, p);
-      self.write('|');
+      self.write(self.linedraw.verti);
     }
   }
   self.size = function at_size() {
