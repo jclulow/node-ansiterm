@@ -12,6 +12,10 @@ var parsetable = {
     { c: 0x04, acts: [ { a: 'EMIT', b: '^D' } ] },
     { c: 0x0d, acts: [ { a: 'EMIT', b: 'CR' } ] },
     { c: 0x0a, acts: [ { a: 'EMIT', b: 'LF' } ] },
+    { c: 0x08, acts: [ { a: 'EMIT', b: 'BS' } ] },
+    { c: 0x7f, acts: [ { a: 'EMIT', b: 'DEL' } ] },
+    { c: 0x09, acts: [ { a: 'EMIT', b: 'TAB' } ] },
+    { c: 0x15, acts: [ { a: 'EMIT', b: 'NAK' } ] },
     { acts: [ { a: 'EMIT', b: 'keypress', c: true } ] } // default
   ],
   'ESCAPE': [
@@ -48,6 +52,7 @@ function _curpos(self)
 {
   var x = self._store.split(/;/);
   self.debug('CURSOR POSITION: ' + x[0] + ', ' + x[1]);
+  self.emit('position', x[0], x[1]);
   self._store = '';
 }
 
@@ -173,6 +178,29 @@ function ANSITerm()
   self.cursor = function at_cursor(curs) {
     self._out.write(CSI + '?25' + (curs ? 'h' : 'l'));
   };
+  self.reverse = function at_reverse() {
+    self._out.write(CSI + '7m');
+  };
+  self.reset = function at_reset() {
+    self._out.write(CSI + 'm');
+  };
+  self.drawHorizontalLine = function at_drawHorizontalLine(y, xfrom, xto) {
+    var s = '';
+    for (var p = xfrom; p <= xto; p++)
+      s += '-';
+    self.moveto(xfrom, y);
+    self.write(s);
+  }
+  self.drawVerticalLine = function at_drawVerticalLine(x, yfrom, yto) {
+    for (var p = yfrom; p <= yto; p++) {
+      self.moveto(x, p);
+      self.write('|');
+    }
+  }
+  self.size = function at_size() {
+    return { h: self._out.rows, w: self._out.columns };
+  }
+  process.on('SIGWINCH', function() { self.emit('resize', self.size()) });
 }
 util.inherits(ANSITerm, events.EventEmitter);
 
