@@ -88,8 +88,9 @@ function _downthere(str)
   at.write(CSI + 'J'); // erase down
 
   str.split(/[\n\r]/).forEach(function(line) {
-    var ll = line.substr(0, process.stdout.columns - 2);
-    at.write(CSI + '4G' + line + ESC + 'D');
+    var ll = line.substr(0, process.stdout.columns - 6) +
+      (line.length > process.stdout.columns - 6 ? CSI + '1;33m$' + CSI + 'm' : '');
+    at.write(CSI + '4G' + ll + ESC + 'D');
   });
 
   _resetscroll();
@@ -100,7 +101,7 @@ function _dothings(str)
 {
   var m = str.match(/^i (.*)$/);
   if (m) {
-    _downthere(util.inspect(global[m[1]], false, null, true));
+    _downthere(util.inspect(global[m[1]], false, null));
     return;
   }
 
@@ -165,6 +166,7 @@ function _clock()
 
   at.cursor(true);
   at.write(ESC + '8');
+  at.reset();
 }
 setInterval(_clock, 1000);
 
@@ -189,6 +191,7 @@ function _listbox()
 
   _resetscroll();
   at.write(ESC + '8'); // restore
+  at.reset();
 }
 
 function _listboxScroll2(down)
@@ -212,6 +215,7 @@ function _listboxScroll2(down)
 
   _resetscroll();
   at.write(ESC + '8'); // restore
+  at.reset();
   at.cursor(true);
 }
 
@@ -250,7 +254,7 @@ function _inssel()
   if (typeof (global[KEYS[selected]]) === 'function')
     _downthere(global[KEYS[selected]].toString());
   else
-    _downthere(util.inspect(global[KEYS[selected]], false, null, true));
+    _downthere(util.inspect(global[KEYS[selected]], false, null));
 }
 _output('NB: Use cursor up/down to select an Object from the List');
 _output('    Then, use CTRL+B to inspect it.');
