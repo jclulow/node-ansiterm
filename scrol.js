@@ -83,7 +83,7 @@ function _downthere(str)
 {
   at.write(ESC + '7'); // save
 
-  at.write(CSI + (AGAIN + 2) + ';' + (process.stdout.rows - 8) + 'r');
+  at.write(CSI + (AGAIN + 2) + ';' + (process.stdout.rows - 1) + 'r');
   at.moveto(1, AGAIN + 2);
   at.write(CSI + 'J'); // erase down
 
