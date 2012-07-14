@@ -37,7 +37,7 @@ var LAST = 12;
 var AGAIN = 40;
 
 _ldon();
-  at.write(CSI + '1m');
+  at.write(CSI + '1;36m'); // bold cyan
 
   at.moveto(1, FIRST);
   at.write(hline + CSI + '8G' + '  COMMAND PROMPT  ');
@@ -157,9 +157,12 @@ function _clock()
 {
   at.write(ESC + '7');
   at.cursor(false);
+
+  at.moveto(1, 2);
   var s = new Date().toLocaleString();
-  at.moveto(process.stdout.columns - 2 - s.length, 2);
-  at.write(CSI + '1m' + s);
+  var len = process.stdout.columns - 2 - s.length;
+  at.write(CSI + '1m' + CSI + '2G SOME KIND OF INSPECTOR!' + CSI + len + 'G' + s);
+
   at.cursor(true);
   at.write(ESC + '8');
 }
