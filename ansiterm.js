@@ -14,12 +14,12 @@ var LINEDRAW_UTF8 = {
   bottomleft: '\u2517'
 };
 var LINEDRAW_VT100 = {
-  horiz: ESC + '(0\u0071' + ESC + '(B',
-  verti: ESC + '(0\u0078' + ESC + '(B',
-  topleft: ESC + '(0\u006c' + ESC + '(B',
-  topright: ESC + '(0\u006b' + ESC + '(B',
-  bottomright: ESC + '(0\u006a' + ESC + '(B',
-  bottomleft: ESC + '(0\u006d' + ESC + '(B'
+  horiz: '\u0071',
+  verti: '\u0078',
+  topleft: '\u006c',
+  topright: '\u006b',
+  bottomright: '\u006a',
+  bottomleft: '\u006d'
 };
 var LINEDRAW_ASCII = {
   horiz: '-',
@@ -72,6 +72,15 @@ function _up(self) { self.debug('UP'); }
 function _down(self) { self.debug('DOWN'); }
 function _right(self) { self.debug('RIGHT'); }
 function _left(self) { self.debug('LEFT'); }
+
+function _ldon(self) {
+  if (self.linedraw === LINEDRAW_VT100)
+    self.write(ESC + '(0');
+}
+function _ldoff(self) {
+  if (self.linedraw === LINEDRAW_VT100)
+    self.write(ESC + '(B');
+}
 
 function _curpos(self)
 {
@@ -173,10 +182,11 @@ function ANSITerm()
   self._in = process.stdin; // XXX
   self._out = process.stdout; // XXX
   self._err = process.stderr; // XXX
+  self._ldcount = 0;
 
   self.linedraw = LINEDRAW_VT100;
-  if (process.env.LANG && process.env.LANG.match(/[uU][tT][fF]-?8$/))
-    self.linedraw = LINEDRAW_UTF8;
+  //if (process.env.LANG && process.env.LANG.match(/[uU][tT][fF]-?8$/))
+   // self.linedraw = LINEDRAW_UTF8;
 
   if (!self._in.isTTY || !self._out.isTTY)
     throw new Error('not a tty');
@@ -220,21 +230,63 @@ function ANSITerm()
     self._out.write(CSI + 'm');
   };
   self.drawHorizontalLine = function at_drawHorizontalLine(y, xfrom, xto) {
-    var s = '';
-    for (var p = xfrom; p <= xto; p++)
-      s += self.linedraw.horiz;
+    if (typeof (xfrom) !== 'number') xfrom = 1;
+    if (typeof (xto) !== 'number') xto = self._out.columns;
     self.moveto(xfrom, y);
-    self.write(s);
-  }
-  self.drawVerticalLine = function at_drawVerticalLine(x, yfrom, yto) {
-    for (var p = yfrom; p <= yto; p++) {
-      self.moveto(x, p);
-      self.write(self.linedraw.verti);
+    self.enableLinedraw();
+    if (false) {
+      self.write(self.linedraw.horiz + CSI + (xto - xfrom) + 'b');
+    } else {
+      var s = ''; for (var i = 0; i <= (xto - xfrom); i++) s += self.linedraw.horiz;
+      self.write(s);
     }
-  }
+    self.disableLinedraw();
+  };
+  self.drawVerticalLine = function at_drawVerticalLine(x, yfrom, yto) {
+    if (typeof (yfrom) !== 'number') yfrom = 1;
+    if (typeof (yto) !== 'number') yto = self._out.rows;
+    self.moveto(x, yfrom);
+    self.enableLinedraw();
+    for (var p = yfrom; p <= yto; p++) {
+      self.write(self.linedraw.verti + CSI + 'B' + CSI + x + 'G'); // draw verti, move down
+    }
+    self.disableLinedraw();
+  };
+  self.drawBox = function at_drawBox(x1, y1, x2, y2) {
+    if (typeof (x1) !== 'number') x1 = 1;
+    if (typeof (y1) !== 'number') y1 = 1;
+    if (typeof (x2) !== 'number') x2 = self._out.columns;
+    if (typeof (y2) !== 'number') y2 = self._out.rows;
+    var horizl = '';
+    for (var p = x1 + 1; p <= x2 - 1; p++)
+      horizl += self.linedraw.horiz;
+    self.enableLinedraw();
+    self.moveto(x1, y1);
+    self.write(self.linedraw.topleft + horizl + self.linedraw.topright);
+    self.moveto(x1, y2);
+    self.write(self.linedraw.bottomleft + horizl + self.linedraw.bottomright);
+    self.drawVerticalLine(x1, y1 + 1, y2 - 1);
+    self.drawVerticalLine(x2, y1 + 1, y2 - 1);
+    self.disableLinedraw();
+  };
+  self.doubleHeight = function at_doubleHeight(x, y, str) {
+    self.moveto(x, y);
+    self.write(ESC + '#3' + str);
+    self.moveto(x, y + 1);
+    self.write(ESC + '#4' + str);
+  };
+  self.disableLinedraw = function at_disableLinedraw() {
+    if (self._ldcount === 0) return;
+    self._ldcount--;
+    if (self._ldcount === 0) _ldoff(self);
+  };
+  self.enableLinedraw = function at_enableLinedraw() {
+    if (self._ldcount === 0) _ldon(self);
+    self._ldcount++;
+  };
   self.size = function at_size() {
     return { h: self._out.rows, w: self._out.columns };
-  }
+  };
   self.softReset = function at_softReset() {
     self.write(CSI + '!p');
   };

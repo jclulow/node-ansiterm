@@ -18,8 +18,6 @@ function _many(glyph, num)
   return s;
 }
 
-function _ldon() { at.write(ESC + '(0'); }
-function _ldoff() { at.write(ESC + '(B'); }
 var hline = _many('\u0071', process.stdout.columns);
 
 at.reverse();
@@ -28,18 +26,20 @@ var FIRST = 3;
 var LAST = 12;
 var AGAIN = 40;
 
-_ldon();
-  at.write(CSI + '1;36m'); // bold cyan
+at.write(CSI + '1;36m'); // bold cyan
 
-  at.moveto(1, FIRST);
-  at.write(hline + CSI + '8G' + '  COMMAND PROMPT  ');
+at.enableLinedraw();
+  at.drawHorizontalLine(FIRST);
+  at.drawHorizontalLine(LAST);
+  at.drawHorizontalLine(AGAIN);
+at.disableLinedraw();
 
-  at.moveto(1, LAST);
-  at.write(hline + CSI + '8G' + '  OBJECT LIST  ');
-
-  at.moveto(1, AGAIN);
-  at.write(hline + CSI + '8G' + '  INSPECTOR  ');
-_ldoff();
+at.moveto(8, FIRST);
+at.write('  COMMAND PROMPT  ');
+at.moveto(8, LAST);
+at.write('  OBJECT LIST  ');
+at.moveto(8, AGAIN);
+at.write('  INSPECTOR  ');
 
 at.reset();
 
