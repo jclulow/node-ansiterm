@@ -7,16 +7,8 @@ var ANSITerm = require('./ansiterm').ANSITerm;
 var at = new ANSITerm();
 at.clear();
 
-at.on('^C', function() {
-  at.clear();
-  at.logerr('OH NO, ^C!');
-  at.cursor(true);
-  exit(0);
-});
-
 var ESC = '\u001b';
 var CSI = ESC + '[';
-
 
 function _many(glyph, num)
 {

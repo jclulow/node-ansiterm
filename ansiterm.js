@@ -33,7 +33,7 @@ var LINEDRAW_ASCII = {
 var parsetable = {
   'REST': [
     { c: 0x1b, acts: [ { a: 'STATE', b: 'ESCAPE' } ] },
-    { c: 0x03, acts: [ { a: 'EMIT', b: '^C' } ] },
+    { c: 0x03, acts: [ { a: 'EMIT', b: '^C', d: true } ] },
     { c: 0x04, acts: [ { a: 'EMIT', b: '^D' } ] },
     { c: 0x0d, acts: [ { a: 'EMIT', b: 'CR' } ] },
     { c: 0x0a, acts: [ { a: 'EMIT', b: 'LF' } ] },
@@ -128,6 +128,12 @@ function _procbuf(self)
       break;
     case 'EMIT':
       self.debug('EMIT: ' + act.b);
+      if (act.d && self.listeners(act.b).length < 1) {
+        self.clear();
+        self.moveto(1, 1);
+        self.write('terminated (' + act.b + ')\n');
+        process.exit(1);
+      }
       if (act.c)
         self.emit(act.b, c);
       else
@@ -229,7 +235,11 @@ function ANSITerm()
   self.size = function at_size() {
     return { h: self._out.rows, w: self._out.columns };
   }
+  self.softReset = function at_softReset() {
+    self.write(CSI + '!p');
+  };
   process.on('SIGWINCH', function() { self.emit('resize', self.size()) });
+  process.on('exit', function(err) { self.softReset(); });
 }
 util.inherits(ANSITerm, events.EventEmitter);
 
