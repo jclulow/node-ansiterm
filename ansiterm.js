@@ -215,6 +215,10 @@ function ANSITerm()
     self._out.write('\u001b[2J');
   };
   self.moveto = function at_moveto(x, y) {
+    if (x < 0)
+      x = self._out.columns + x + 1;
+    if (y < 0)
+      y = self._out.rows + y + 1;
     self._out.write(CSI + y + ';' + x + 'f');
   };
   self.write = function at_write(str) {
