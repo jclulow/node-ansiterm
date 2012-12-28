@@ -246,11 +246,29 @@ function ANSITerm()
   self.cursor = function at_cursor(curs) {
     self._out.write(CSI + '?25' + (curs ? 'h' : 'l'));
   };
+  self.bold = function at_reverse() {
+    self._out.write(CSI + '1m');
+  };
   self.reverse = function at_reverse() {
     self._out.write(CSI + '7m');
   };
   self.reset = function at_reset() {
     self._out.write(CSI + 'm');
+  };
+  self.eraseLine = function at_eraseLine() {
+    self._out.write(CSI + '2K');
+  };
+  self.eraseStartOfLine = function at_eraseStartOfLine() {
+    self._out.write(CSI + '1K');
+  };
+  self.eraseEndOfLine = function at_eraseEndOfLine() {
+    self._out.write(CSI + 'K');
+  };
+  self.insertMode = function at_insertMode() {
+    self._out.write(CSI + '4h');
+  };
+  self.replaceMode = function at_replaceMode() {
+    self._out.write(CSI + '4l');
   };
   self.drawHorizontalLine = function at_drawHorizontalLine(y, xfrom, xto) {
     if (typeof (xfrom) !== 'number') xfrom = 1;
