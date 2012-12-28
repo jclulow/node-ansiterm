@@ -329,7 +329,9 @@ function ANSITerm()
     return { h: self._out.rows, w: self._out.columns };
   };
   self.softReset = function at_softReset() {
-    self.write(CSI + '!p');
+    self.cursor(true);
+    self.replaceMode();
+    self.reset();
   };
   process.on('SIGWINCH', function() { self.emit('resize', self.size()) });
   process.on('exit', function(err) { self.softReset(); });
