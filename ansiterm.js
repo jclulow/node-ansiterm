@@ -33,14 +33,20 @@ var LINEDRAW_ASCII = {
 var parsetable = {
   'REST': [
     { c: 0x1b, acts: [ { a: 'STATE', b: 'ESCAPE' }, { a: 'TIMEOUT', e: 'ESC' } ] },
+    { c: 0x00, acts: [ { a: 'EMIT', b: 'NUL', } ] },
+    { c: 0x01, acts: [ { a: 'EMIT', b: '^A', } ] },
+    { c: 0x02, acts: [ { a: 'EMIT', b: '^B', } ] },
     { c: 0x03, acts: [ { a: 'EMIT', b: '^C', d: true } ] },
     { c: 0x04, acts: [ { a: 'EMIT', b: '^D' } ] },
-    { c: 0x0d, acts: [ { a: 'EMIT', b: 'CR' } ] },
-    { c: 0x0a, acts: [ { a: 'EMIT', b: 'LF' } ] },
+    { c: 0x05, acts: [ { a: 'EMIT', b: '^E', } ] },
+    { c: 0x06, acts: [ { a: 'EMIT', b: '^F', } ] },
+    { c: 0x07, acts: [ { a: 'EMIT', b: 'BEL', } ] },
     { c: 0x08, acts: [ { a: 'EMIT', b: 'BS' } ] },
-    { c: 0x7f, acts: [ { a: 'EMIT', b: 'DEL' } ] },
     { c: 0x09, acts: [ { a: 'EMIT', b: 'TAB' } ] },
+    { c: 0x0a, acts: [ { a: 'EMIT', b: 'LF' } ] },
+    { c: 0x0d, acts: [ { a: 'EMIT', b: 'CR' } ] },
     { c: 0x15, acts: [ { a: 'EMIT', b: 'NAK' } ] },
+    { c: 0x7f, acts: [ { a: 'EMIT', b: 'DEL' } ] },
     { acts: [ { a: 'EMIT', b: 'keypress', c: true } ] } // default
   ],
   'ESCAPE': [
