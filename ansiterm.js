@@ -32,7 +32,7 @@ var LINEDRAW_ASCII = {
 
 var parsetable = {
   'REST': [
-    { c: 0x1b, acts: [ { a: 'STATE', b: 'ESCAPE' } ] },
+    { c: 0x1b, acts: [ { a: 'STATE', b: 'ESCAPE' }, { a: 'TIMEOUT', e: 'ESC' } ] },
     { c: 0x03, acts: [ { a: 'EMIT', b: '^C', d: true } ] },
     { c: 0x04, acts: [ { a: 'EMIT', b: '^D' } ] },
     { c: 0x0d, acts: [ { a: 'EMIT', b: 'CR' } ] },
@@ -124,6 +124,10 @@ function _procbuf(self)
   if (self._pos >= self._buf.length)
     return;
 
+  if (self._timeout)
+    clearTimeout(self._timeout);
+  self._timeout = null;
+
   var c = (self._buf[self._pos]);
   var ptt = _ptt(parsetable, self._state, c);
 
@@ -134,6 +138,15 @@ function _procbuf(self)
     case 'STATE':
       self.debug('STATE: ' + self._state + ' -> ' + act.b);
       self._state = act.b;
+      break;
+    case 'TIMEOUT':
+      self.debug('TIMEOUT: ' + act.e);
+      if (self._timeout)
+        clearTimeout(self._timeout);
+      self._timeout = setTimeout(function() {
+        self.emit(act.e);
+        self._state = 'REST';
+      }, 50);
       break;
     case 'EMIT':
       self.debug('EMIT: ' + act.b);
