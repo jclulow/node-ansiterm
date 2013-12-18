@@ -1,0 +1,28 @@
+{
+  "name": "ansiterm",
+  "version": "0.0.1",
+  "description": "Terminal Handling Utility Library",
+  "main": "lib/ansiterm.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jclulow/node-ansiterm.git"
+  },
+  "keywords": [
+    "terminal",
+    "cli",
+    "curses",
+    "tty",
+    "ncurses",
+    "color",
+    "colour",
+    "console",
+    "ansi",
+    "xterm"
+  ],
+  "author": "Joshua M. Clulow <josh@sysmgr.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jclulow/node-ansiterm/issues"
+  },
+  "homepage": "https://github.com/jclulow/node-ansiterm"
+}
