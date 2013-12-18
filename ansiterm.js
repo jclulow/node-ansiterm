@@ -252,6 +252,13 @@ function ANSITerm()
   self.reverse = function at_reverse() {
     self._out.write(CSI + '7m');
   };
+  self.colour256 = function at_colour256(num, bg) {
+    if (bg) {
+      self._out.write(CSI + '48;5;' + num + 'm');
+    } else {
+      self._out.write(CSI + '38;5;' + num + 'm');
+    }
+  };
   self.reset = function at_reset() {
     self._out.write(CSI + 'm');
   };
