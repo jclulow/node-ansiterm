@@ -2,7 +2,7 @@
 
 var exit = process.exit;
 var util = require('util');
-var ANSITerm = require('./ansiterm').ANSITerm;
+var ANSITerm = require('../lib/ansiterm').ANSITerm;
 
 var at = new ANSITerm();
 at.clear();
