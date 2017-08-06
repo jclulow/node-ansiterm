@@ -1,4 +1,14 @@
 #!/usr/bin/env node
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+/*
+ * Copyright (c) 2014, Joshua M. Clulow
+ */
+
 /* vim: set ts=8 sts=8 sw=8 noet: */
 
 var exit = process.exit;
@@ -16,42 +26,28 @@ update(x, mods)
 	at.moveto(10, 3);
 	at.write(x);
 	if (mods) {
+		if (mods.alt)
+			at.write(' + alt ');
 		if (mods.shift)
 			at.write(' + shift ');
+		if (mods.meta)
+			at.write(' + meta ');
 		if (mods.control)
 			at.write(' + control ');
 	}
 	at.write('                                       ');
 }
 
-function
-attach_listener(thing)
-{
-	at.on(thing, function (mods) {
-		update(thing, mods);
-	});
-}
-
-var THINGS = [
-	'up',
-	'down',
-	'left',
-	'right',
-	'next',
-	'prior',
-	'home',
-	'end',
-	'insert',
-	'delete'
-];
-
-for (var i = 0; i < THINGS.length; i++) {
-	attach_listener(THINGS[i]);
-}
+at.on('special', update);
+at.on('control', function (info) {
+	update(info.key);
+});
 
 at.on('keypress', function (chr) {
-	if (chr === 0x71 || chr === 0x51) {
+	if (chr === 'q' || chr === 'Q') {
 		at.softReset();
 		process.exit(0);
 	}
+
+	update(chr);
 });
