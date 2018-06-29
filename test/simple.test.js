@@ -15,6 +15,8 @@ var mod_term = require('../');
 var mod_util = require('util');
 var test = require('tape');
 
+var bf = Buffer.from;
+
 var ESC = '\u001b';
 var CSI = ESC + '[';
 var SS3 = ESC + 'O';
@@ -132,6 +134,40 @@ function expectSpecial(seq, exp, emods) {
 	};
 }
 
+
+function expectSequence(seq, exp) {
+	return function (t) {
+		function done() {
+			term.removeAllListeners('keypress');
+			term.removeAllListeners('control');
+			term.removeAllListeners('special');
+
+			t.end();
+		}
+
+		function proc(e, v) {
+			var cur = exp.shift();
+			t.deepEqual({ e: e, v: v }, cur);
+			if (exp.length === 0) {
+				done();
+			}
+		}
+
+		term.on('keypress', function (c) {
+			proc('keypress', c);
+		});
+
+		term.on('control', function (ctrl) {
+			proc('control', ctrl);
+		});
+
+		term.on('special', function (name, mods) {
+			proc('special', [ name, mods ]);
+		});
+
+		stdin.write(seq);
+	};
+}
 
 var stdin = new MockTTY();
 var stdout = new MockTTY();
@@ -298,4 +334,84 @@ test('page movement', function (t) {
 		t2.test('alt + page up',
 		    expectSpecial(CSI + '6;3~', 'next', PRESS_ALT));
 	});
+});
+
+
+test('utf-8', function (t) {
+	t.test('2-byte characters', function (t2) {
+		t2.test('NKO LETTER RRA (U+07DA)', expectKeypress('ߚ', 'ߚ'));
+		t2.test('CYRILLIC CAPITAL LETTER NJE (U+040A)',
+		    expectKeypress('Њ', 'Њ'));
+		t2.test('ARABIC LETTER JEEM (U+062C)', expectKeypress('ج', 'ج'));
+	});
+
+	t.test('3-byte characters', function (t2) {
+		t2.test('FOR ALL (U+2200)', expectKeypress('∀', '∀'));
+		t2.test('SNOWMAN (U+2603)', expectKeypress('☃', '☃'));
+		t2.test('DEVANAGARI LETTER AA (U+0906)', expectKeypress('आ', 'आ'));
+		t2.test('GEORGIAN LETTER LAS (U+10DA)', expectKeypress('ლ', 'ლ'));
+	});
+
+	t.test('4-byte characters', function (t2) {
+		t2.test('LINEAR B SYLLABLE B044 KE (U+10010 )',
+		    expectKeypress('𐀐', '𐀐'));
+		t2.test('CUNEIFORM SIGN AB TIMES U PLUS U PLUS U (U+12014)',
+		    expectKeypress('𒀔', '𒀔'));
+		t2.test('DESERET CAPITAL LETTER KAY (U+10417)',
+		    expectKeypress('𐐗', '𐐗'));
+		t2.test('GOTHIC LETTER OTHAL (U+10349)',
+		    expectKeypress('𐍉', '𐍉'));
+		t2.test('OLD PERSIAN SIGN DI (U+103AE)',
+		    expectKeypress('𐎮', '𐎮'));
+	});
+});
+
+
+test('invalid utf-8 bytes', function (t) {
+	t.test('at start of sequence', function (t2) {
+		t2.test('0b10000000',
+		    expectKeypress(bf([ 0x80 ]), String.fromCharCode(0x80)));
+		t2.test('0b10100000',
+		    expectKeypress(bf([ 0xa0 ]), String.fromCharCode(0xa0)));
+		t2.test('0b11111000',
+		    expectKeypress(bf([ 0xf8 ]), String.fromCharCode(0xf8)));
+		t2.test('0b11111100',
+		    expectKeypress(bf([ 0xfc ]), String.fromCharCode(0xfc)));
+		t2.test('0b11111111',
+		    expectKeypress(bf([ 0xff ]), String.fromCharCode(0xff)));
+	});
+
+	t.test('at end of 2-byte sequence',
+	    expectSequence(bf([ 0xc0, 0x03 ]), [
+		{ e: 'keypress', v: String.fromCharCode(0xc0) },
+		{ e: 'control', v: { key: '^C', ascii: 'ETX' } },
+	]));
+
+	t.test('at second char of 3-byte sequence',
+	    expectSequence(bf([0xe0, 0x1b, 0x5b, 0x41 ]), [
+		{ e: 'keypress', v: String.fromCharCode(0xe0) },
+		{ e: 'special', v: [ 'up', NO_MODS ] }
+	]));
+
+	t.test('at end of 3-byte sequence',
+	    expectSequence(bf([0xe0, 0x80, 0x1d ]), [
+		{ e: 'keypress', v: String.fromCharCode(0xe0) },
+		{ e: 'keypress', v: String.fromCharCode(0x80) },
+		{ e: 'control', v: { key: '^]', ascii: 'GS' } }
+	]));
+
+	t.test('at third char of 4-byte sequence',
+	    expectSequence(bf([0xf0, 0x82, 0x1b, 0x5b, 0x31, 0x3b, 0x32, 0x41 ]), [
+		{ e: 'keypress', v: String.fromCharCode(0xf0) },
+		{ e: 'keypress', v: String.fromCharCode(0x82) },
+		{ e: 'special', v: [ 'up', PRESS_SHIFT ] }
+	]));
+
+	t.test('at end of 4-byte sequence',
+	    expectSequence(bf([ 0xf0, 0x82, 0xb0, 0x16 ]), [
+		{ e: 'keypress', v: String.fromCharCode(0xf0) },
+		{ e: 'keypress', v: String.fromCharCode(0x82) },
+		{ e: 'keypress', v: String.fromCharCode(0xb0) },
+		{ e: 'control', v: { key: '^V', ascii: 'SYN' } }
+	]));
 });
