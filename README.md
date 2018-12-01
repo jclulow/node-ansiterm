@@ -90,6 +90,27 @@ Additionally, an object is passed with the following fields:
 Note that terminals don't support the full matrix of possible combinations,
 and will ignore shift or control in some cases.
 
+## `wcwidth(codepoint)`
+
+When given a numeric
+[UCS](https://en.wikipedia.org/wiki/Universal_Coded_Character_Set) codepoint,
+this function will return how many columns are needed to display it in the
+terminal. This function is compatible with
+[wcwidth(3C)](https://illumos.org/man/3C/wcwidth) in C.
+
+## `wcswidth(str)`
+
+When given a string, this function will return how many columns are needed to
+display it when printed to the terminal. If the string contains any
+nonprintable characters, then this returns -1. This function is compatible with
+[wcswidth(3C)](https://illumos.org/man/3C/wcswidth) in C.
+
+## `forEachGrapheme(str, f)`
+
+This function will call `f(grapheme, width)` for each individual grapheme.
+Combining characters are grouped with their preceding, printing character, and
+nonprintable characters (width of -1) are emitted independently.
+
 ## License
 
 MIT
