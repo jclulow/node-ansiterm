@@ -1,6 +1,6 @@
 {
   "name": "ansiterm",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Terminal Handling Utility Library",
   "main": "lib/ansiterm.js",
   "repository": {
